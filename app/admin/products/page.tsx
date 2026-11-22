@@ -11,15 +11,16 @@ export const metadata: Metadata = { title: "Products — Admin" };
 export default async function AdminProductsPage({
   searchParams,
 }: {
-  searchParams: { page?: string; q?: string };
+  searchParams: Promise<{ page?: string; q?: string }>;
 }) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "admin") redirect("/");
 
-  const page = Number(searchParams.page ?? 1);
+  const resolvedSearchParams = await searchParams;
+  const page = Number(resolvedSearchParams.page ?? 1);
   const limit = 15;
   const skip = (page - 1) * limit;
-  const q = searchParams.q;
+  const q = resolvedSearchParams.q;
 
   const where = q ? { name: { contains: q, mode: "insensitive" as const } } : {};
 

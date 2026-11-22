@@ -33,6 +33,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
       return;
     }
     addItem({
+      id: `${product.id}-${defaultVariant.id}`,
       productId: product.id,
       variantId: defaultVariant.id,
       name: product.name,

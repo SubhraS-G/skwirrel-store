@@ -1,0 +1,22 @@
+{
+  "name": "SKWIRREL — Born From Odisha. Made For The World.",
+  "short_name": "SKWIRREL",
+  "description": "Premium cultural streetwear from Odisha, India. Every stitch tells a story of memory, music, language, and pride.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0A0A",
+  "theme_color": "#E85A1C",
+  "icons": [
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

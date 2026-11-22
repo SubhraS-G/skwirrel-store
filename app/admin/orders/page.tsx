@@ -11,15 +11,16 @@ export const metadata: Metadata = { title: "Orders — Admin" };
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams: { page?: string; status?: string };
+  searchParams: Promise<{ page?: string; status?: string }>;
 }) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "admin") redirect("/");
 
-  const page = Number(searchParams.page ?? 1);
+  const resolvedSearchParams = await searchParams;
+  const page = Number(resolvedSearchParams.page ?? 1);
   const limit = 20;
   const skip = (page - 1) * limit;
-  const status = searchParams.status;
+  const status = resolvedSearchParams.status;
 
   const where = status ? { status: status as any } : {};
 

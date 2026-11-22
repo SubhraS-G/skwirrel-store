@@ -26,10 +26,19 @@ export function FeaturedCollection({ products }: FeaturedCollectionProps) {
         </div>
 
         {products.length === 0 ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="aspect-[3/4] bg-[#111] animate-pulse" />
-            ))}
+          <div className="border border-brand-gray/20 bg-[#111] px-8 py-16 text-center">
+            <p className="font-bebas text-3xl text-brand-ivory tracking-wider mb-2">
+              THE NEXT DROP IS BREWING.
+            </p>
+            <p className="text-brand-gray text-sm mb-6 max-w-md mx-auto">
+              Fresh fits rooted in Odisha are being crafted. Explore the full collection in the meantime.
+            </p>
+            <Link
+              href="/shop"
+              className="inline-block bg-brand-orange text-brand-ivory px-10 py-4 text-[0.7rem] tracking-[0.25em] uppercase hover:bg-brand-orange-dark transition-colors"
+            >
+              Browse The Shop
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">

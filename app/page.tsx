@@ -6,9 +6,13 @@ import { BrandStory } from "@/components/home/BrandStory";
 import { FromNature } from "@/components/home/FromNature";
 import { LookbookPreview } from "@/components/home/LookbookPreview";
 import { CultureSection } from "@/components/home/CultureSection";
+import { JournalPreview } from "@/components/home/JournalPreview";
 import { Testimonials } from "@/components/home/Testimonials";
 import { NewsletterSection } from "@/components/home/NewsletterSection";
 import { getFeaturedProducts } from "@/lib/supabase/products";
+import { getLookbookImages } from "@/lib/supabase/lookbook";
+import { getBlogPosts } from "@/lib/supabase/blog";
+import { getApprovedTestimonials } from "@/lib/supabase/testimonials";
 
 export const metadata: Metadata = {
   title: "SKWIRREL — Born From Odisha. Made For The World.",
@@ -17,7 +21,13 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const featuredProducts = await getFeaturedProducts();
+  const [featuredProducts, lookbookImages, journalPosts, testimonials] =
+    await Promise.all([
+      getFeaturedProducts(),
+      getLookbookImages(),
+      getBlogPosts(3),
+      getApprovedTestimonials(6),
+    ]);
 
   return (
     <>
@@ -26,9 +36,10 @@ export default async function HomePage() {
       <FeaturedCollection products={featuredProducts} />
       <BrandStory />
       <FromNature />
-      <LookbookPreview />
+      <LookbookPreview images={lookbookImages} />
       <CultureSection />
-      <Testimonials />
+      <JournalPreview posts={journalPosts} />
+      <Testimonials testimonials={testimonials} />
       <NewsletterSection />
     </>
   );

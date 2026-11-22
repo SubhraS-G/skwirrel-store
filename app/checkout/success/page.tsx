@@ -1,7 +1,36 @@
 import Link from "next/link";
 import { CheckCircle } from "lucide-react";
+import { stripe } from "@/lib/stripe/client";
+import { confirmPaidOrder } from "@/lib/checkout/confirmation";
 
-export default function CheckoutSuccessPage() {
+export const metadata = { title: "Order Confirmed — SKWIRREL" };
+
+export default async function CheckoutSuccessPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ session_id?: string }>;
+}) {
+  const { session_id } = await searchParams;
+
+  // Stripe redirects back here — confirm the order even if the webhook was
+  // never delivered (local dev, misconfigured endpoint, etc).
+  if (session_id) {
+    try {
+      const session = await stripe.checkout.sessions.retrieve(session_id);
+      if (
+        (session.payment_status === "paid" || session.payment_status === "no_payment_required") &&
+        session.metadata?.orderId
+      ) {
+        await confirmPaidOrder(
+          session.metadata.orderId,
+          typeof session.payment_intent === "string" ? session.payment_intent : null
+        );
+      }
+    } catch (error) {
+      console.error("[CHECKOUT_SUCCESS]", error);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-brand-black pt-20 flex items-center justify-center px-6">
       <div className="text-center max-w-lg">

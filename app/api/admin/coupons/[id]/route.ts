@@ -9,17 +9,19 @@ async function requireAdmin() {
   return session;
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const resolvedParams = await params;
   const body = await request.json();
-  const coupon = await prisma.coupon.update({ where: { id: params.id }, data: body });
+  const coupon = await prisma.coupon.update({ where: { id: resolvedParams.id }, data: body });
   return NextResponse.json({ coupon });
 }
 
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  await prisma.coupon.delete({ where: { id: params.id } });
+  const resolvedParams = await params;
+  await prisma.coupon.delete({ where: { id: resolvedParams.id } });
   return NextResponse.json({ success: true });
 }

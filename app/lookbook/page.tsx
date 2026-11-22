@@ -10,11 +10,12 @@ export const metadata: Metadata = {
 };
 
 interface LookbookPageProps {
-  searchParams: { category?: string };
+  searchParams: Promise<{ category?: string }>;
 }
 
 export default async function LookbookPage({ searchParams }: LookbookPageProps) {
-  const images = await getLookbookImages(searchParams.category);
+  const resolvedSearchParams = await searchParams;
+  const images = await getLookbookImages(resolvedSearchParams.category);
 
   return (
     <div className="min-h-screen bg-brand-black pt-20">
@@ -23,7 +24,7 @@ export default async function LookbookPage({ searchParams }: LookbookPageProps) 
           <p className="text-brand-orange text-xs tracking-widest uppercase mb-2">Visual Stories</p>
           <h1 className="font-bebas text-6xl lg:text-8xl text-brand-ivory">THE LOOKBOOK</h1>
         </div>
-        <LookbookFilters activeCategory={searchParams.category} />
+        <LookbookFilters activeCategory={resolvedSearchParams.category} />
         <LookbookGallery images={images} />
       </div>
     </div>

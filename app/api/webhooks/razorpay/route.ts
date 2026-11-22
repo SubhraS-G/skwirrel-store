@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
+import { confirmPaidOrder } from "@/lib/checkout/confirmation";
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,14 +21,15 @@ export async function POST(request: NextRequest) {
 
     if (event.event === "payment.captured") {
       const payment = event.payload.payment.entity;
-      await prisma.order.updateMany({
+      const order = await prisma.order.findFirst({
         where: { razorpay_order_id: payment.order_id },
-        data: {
-          status: "confirmed",
-          payment_status: "paid",
-          razorpay_payment_id: payment.id,
-        },
       });
+      if (order) {
+        await prisma.order
+          .update({ where: { id: order.id }, data: { razorpay_payment_id: payment.id } })
+          .catch(() => {});
+        await confirmPaidOrder(order.id);
+      }
     }
 
     if (event.event === "payment.failed") {

@@ -4,10 +4,17 @@ import { prisma } from "@/lib/prisma";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = "https://skwirrel.in";
 
-  const [products, posts] = await Promise.all([
-    prisma.product.findMany({ where: { is_active: true }, select: { slug: true, updated_at: true } }),
-    prisma.blogPost.findMany({ where: { is_published: true }, select: { slug: true, updated_at: true } }),
-  ]);
+  let products: Array<{ slug: string; updated_at: Date }> = [];
+  let posts: Array<{ slug: string; updated_at: Date }> = [];
+
+  try {
+    [products, posts] = await Promise.all([
+      prisma.product.findMany({ where: { is_active: true }, select: { slug: true, updated_at: true } }),
+      prisma.blogPost.findMany({ where: { is_published: true }, select: { slug: true, updated_at: true } }),
+    ]);
+  } catch (error) {
+    console.warn("Sitemap prerender skipped because the database is unavailable:", error);
+  }
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: base, lastModified: new Date(), changeFrequency: "daily", priority: 1 },
@@ -18,6 +25,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/lookbook`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
     { url: `${base}/blog`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
     { url: `${base}/contact`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.5 },
+    { url: `${base}/size-guide`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.5 },
+    { url: `${base}/returns`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.5 },
+    { url: `${base}/faq`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
+    { url: `${base}/track-order`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.4 },
   ];
 
   const productRoutes: MetadataRoute.Sitemap = products.map((p) => ({

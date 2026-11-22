@@ -14,7 +14,10 @@ export async function POST(request: NextRequest) {
     }
 
     await prisma.newsletterSubscriber.create({ data: { email } });
-    await sendWelcomeEmail(email);
+    // A mail hiccup shouldn't fail an already-persisted subscription.
+    await sendWelcomeEmail(email).catch((error) =>
+      console.error("[NEWSLETTER_EMAIL]", error)
+    );
 
     return NextResponse.json({ message: "Subscribed successfully!" }, { status: 201 });
   } catch (error) {

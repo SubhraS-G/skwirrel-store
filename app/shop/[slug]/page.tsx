@@ -10,13 +10,14 @@ import { getProductBySlug, getRelatedProducts } from "@/lib/supabase/products";
 import { generateProductSchema } from "@/lib/seo/schema";
 
 interface ProductPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
-  const product = await getProductBySlug(params.slug);
+  const resolvedParams = await params;
+  const product = await getProductBySlug(resolvedParams.slug);
   if (!product) return { title: "Product Not Found" };
 
   return {
@@ -31,7 +32,8 @@ export async function generateMetadata({
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const product = await getProductBySlug(params.slug);
+  const resolvedParams = await params;
+  const product = await getProductBySlug(resolvedParams.slug);
   if (!product) notFound();
 
   const relatedProducts = await getRelatedProducts(product.id, product.category_id);

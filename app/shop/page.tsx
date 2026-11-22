@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 interface ShopPageProps {
-  searchParams: {
+  searchParams: Promise<{
     category?: string;
     sort?: string;
     color?: string;
@@ -21,19 +21,20 @@ interface ShopPageProps {
     maxPrice?: string;
     page?: string;
     q?: string;
-  };
+  }>;
 }
 
 export default async function ShopPage({ searchParams }: ShopPageProps) {
+  const resolvedSearchParams = await searchParams;
   const { products, total, pages } = await getProducts({
-    category: searchParams.category,
-    sort: searchParams.sort ?? "newest",
-    color: searchParams.color,
-    size: searchParams.size,
-    minPrice: searchParams.minPrice ? Number(searchParams.minPrice) : undefined,
-    maxPrice: searchParams.maxPrice ? Number(searchParams.maxPrice) : undefined,
-    page: searchParams.page ? Number(searchParams.page) : 1,
-    query: searchParams.q,
+    category: resolvedSearchParams.category,
+    sort: resolvedSearchParams.sort ?? "newest",
+    color: resolvedSearchParams.color,
+    size: resolvedSearchParams.size,
+    minPrice: resolvedSearchParams.minPrice ? Number(resolvedSearchParams.minPrice) : undefined,
+    maxPrice: resolvedSearchParams.maxPrice ? Number(resolvedSearchParams.maxPrice) : undefined,
+    page: resolvedSearchParams.page ? Number(resolvedSearchParams.page) : 1,
+    query: resolvedSearchParams.q,
   });
 
   return (
@@ -43,14 +44,14 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         <ShopSearch />
         <div className="flex flex-col lg:flex-row gap-10 mt-8">
           <aside className="lg:w-64 flex-shrink-0">
-            <ShopFilters searchParams={searchParams} />
+            <ShopFilters searchParams={resolvedSearchParams} />
           </aside>
           <main className="flex-1">
             <ProductGrid
               products={products}
               total={total}
               pages={pages}
-              currentPage={searchParams.page ? Number(searchParams.page) : 1}
+              currentPage={resolvedSearchParams.page ? Number(resolvedSearchParams.page) : 1}
             />
           </main>
         </div>

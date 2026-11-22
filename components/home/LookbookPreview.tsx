@@ -1,23 +1,58 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 
-const ITEMS = [
-  { label: "SS 2025 Collection", aspect: "tall", bg: "from-[#1a1208] to-[#3d2010]" },
-  { label: "Konark Series", aspect: "short", bg: "from-[#0d1a1a] to-[#0f2a2a]" },
-  { label: "Odissi Movement", aspect: "short", bg: "from-[#1e1208] to-[#2d1e0f]" },
-  { label: "Sambalpuri Edit", aspect: "short", bg: "from-[#141414] to-[#2a1a0a]" },
-  { label: "Root Stories", aspect: "short", bg: "from-[#1a0d08] to-[#2d1208]" },
+export interface LookbookPreviewImage {
+  id: string;
+  url: string;
+  alt?: string | null;
+  category?: string | null;
+}
+
+interface LookbookPreviewProps {
+  images?: LookbookPreviewImage[];
+}
+
+const FALLBACK_TILES = [
+  { id: "fb-1", label: "SS 2025 Collection", bg: "from-[#1a1208] to-[#3d2010]" },
+  { id: "fb-2", label: "Konark Series", bg: "from-[#0d1a1a] to-[#0f2a2a]" },
+  { id: "fb-3", label: "Odissi Movement", bg: "from-[#1e1208] to-[#2d1e0f]" },
+  { id: "fb-4", label: "Sambalpuri Edit", bg: "from-[#141414] to-[#2a1a0a]" },
+  { id: "fb-5", label: "Root Stories", bg: "from-[#1a0d08] to-[#2d1208]" },
 ];
 
-export function LookbookPreview() {
-  const ref = useRef(null);
+interface Tile {
+  key: string;
+  label: string;
+  url?: string;
+  bg: string;
+}
+
+export function LookbookPreview({ images = [] }: LookbookPreviewProps) {
+  const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const [activeModal, setActiveModal] = useState<number | null>(null);
+
+  const tiles = useMemo<Tile[]>(() => {
+    if (images.length > 0) {
+      return images.slice(0, 5).map((img, i) => ({
+        key: img.id,
+        label: img.alt || img.category || `Lookbook ${i + 1}`,
+        url: img.url,
+        bg: FALLBACK_TILES[i % FALLBACK_TILES.length].bg,
+      }));
+    }
+    return FALLBACK_TILES.map((t) => ({ key: t.id, label: t.label, bg: t.bg }));
+  }, [images]);
+
+  const tileClass = (i: number) =>
+    i === 0
+      ? "lg:row-span-2 overflow-hidden group cursor-pointer relative min-h-[300px] lg:min-h-[500px]"
+      : "overflow-hidden group cursor-pointer relative min-h-[140px] lg:min-h-[245px]";
 
   return (
     <section className="bg-brand-black py-20 px-6 lg:px-12">
@@ -39,27 +74,24 @@ export function LookbookPreview() {
 
         {/* Masonry grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-1 lg:gap-1.5">
-          {/* First item spans 2 rows */}
-          <div
-            className="lg:row-span-2 overflow-hidden group cursor-pointer relative"
-            onClick={() => setActiveModal(0)}
-          >
-            <div className={`w-full h-full min-h-[300px] lg:min-h-[500px] bg-gradient-to-br ${ITEMS[0].bg} flex items-end transition-transform duration-700 group-hover:scale-[1.02]`}>
-              <span className="text-[0.6rem] tracking-[0.2em] text-brand-ivory/40 uppercase p-4 group-hover:text-brand-orange transition-colors">
-                {ITEMS[0].label}
-              </span>
-            </div>
-          </div>
-
-          {ITEMS.slice(1).map((item, i) => (
-            <div
-              key={i}
-              className="overflow-hidden group cursor-pointer relative"
-              onClick={() => setActiveModal(i + 1)}
-            >
-              <div className={`w-full h-full min-h-[140px] lg:min-h-[245px] bg-gradient-to-br ${item.bg} flex items-end transition-transform duration-700 group-hover:scale-[1.03]`}>
-                <span className="text-[0.6rem] tracking-[0.2em] text-brand-ivory/40 uppercase p-3 group-hover:text-brand-orange transition-colors">
-                  {item.label}
+          {tiles.map((tile, i) => (
+            <div key={tile.key} className={tileClass(i)} onClick={() => setActiveModal(i)}>
+              <div
+                className={`w-full h-full bg-gradient-to-br ${tile.bg} flex items-end transition-transform duration-700 ${
+                  i === 0 ? "group-hover:scale-[1.02]" : "group-hover:scale-[1.03]"
+                }`}
+              >
+                {tile.url && (
+                  <Image
+                    src={tile.url}
+                    alt={tile.label}
+                    fill
+                    sizes="(max-width: 1024px) 50vw, 25vw"
+                    className="object-cover"
+                  />
+                )}
+                <span className="relative z-10 text-[0.6rem] tracking-[0.2em] text-brand-ivory/70 uppercase p-3 lg:p-4 group-hover:text-brand-orange transition-colors bg-gradient-to-t from-black/60 to-transparent w-full pt-10">
+                  {tile.label}
                 </span>
               </div>
             </div>
@@ -69,7 +101,7 @@ export function LookbookPreview() {
 
       {/* Modal */}
       <AnimatePresence>
-        {activeModal !== null && (
+        {activeModal !== null && tiles[activeModal] && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -77,18 +109,30 @@ export function LookbookPreview() {
             className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-6"
             onClick={() => setActiveModal(null)}
           >
-            <button className="absolute top-6 right-6 text-brand-ivory hover:text-brand-orange transition-colors">
+            <button
+              className="absolute top-6 right-6 text-brand-ivory hover:text-brand-orange transition-colors"
+              aria-label="Close lookbook preview"
+            >
               <X size={28} />
             </button>
             <motion.div
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.9 }}
-              className={`w-full max-w-lg aspect-[3/4] bg-gradient-to-br ${ITEMS[activeModal].bg}`}
+              className={`w-full max-w-lg aspect-[3/4] bg-gradient-to-br ${tiles[activeModal].bg} relative overflow-hidden`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6">
-                <p className="text-[0.6rem] tracking-[0.3em] text-brand-orange uppercase">{ITEMS[activeModal].label}</p>
+              {tiles[activeModal].url && (
+                <Image
+                  src={tiles[activeModal].url!}
+                  alt={tiles[activeModal].label}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover"
+                />
+              )}
+              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/70 to-transparent">
+                <p className="text-[0.6rem] tracking-[0.3em] text-brand-orange uppercase">{tiles[activeModal].label}</p>
               </div>
             </motion.div>
           </motion.div>

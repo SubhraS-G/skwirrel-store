@@ -15,7 +15,7 @@ type PaymentMethod = "razorpay" | "stripe" | "cod";
 export function CheckoutForm() {
   const { data: session } = useSession();
   const router = useRouter();
-  const { items, total, clearCart } = useCartStore();
+  const { items, total, coupon, clearCart } = useCartStore();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("razorpay");
   const [loading, setLoading] = useState(false);
 
@@ -23,6 +23,12 @@ export function CheckoutForm() {
     defaultValues: {
       name: session?.user?.name ?? "",
       email: session?.user?.email ?? "",
+      phone: "",
+      line1: "",
+      line2: "",
+      city: "",
+      state: "",
+      pincode: "",
     },
   });
 
@@ -42,6 +48,8 @@ export function CheckoutForm() {
           variantId: i.variantId,
           name: i.name,
           image: i.image,
+          size: i.size,
+          color: i.color,
           price: i.price,
           quantity: i.quantity,
         })),
@@ -57,6 +65,7 @@ export function CheckoutForm() {
         },
         email: formData.email,
         userId: session?.user?.id,
+        couponCode: coupon?.code,
         total: total(),
         paymentMethod,
       };
@@ -71,6 +80,9 @@ export function CheckoutForm() {
 
       if (paymentMethod === "stripe" && data.url) {
         window.location.href = data.url;
+      } else if (paymentMethod === "cod") {
+        clearCart();
+        router.push("/checkout/success");
       } else if (paymentMethod === "razorpay" && data.orderId) {
         const rzp = new (window as any).Razorpay({
           key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
@@ -79,17 +91,32 @@ export function CheckoutForm() {
           currency: data.currency,
           name: "SKWIRREL",
           description: "Your cultural fashion order",
-          handler: () => {
+          handler: async (response: any) => {
+            try {
+              await fetch("/api/checkout/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  provider: "razorpay",
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpaySignature: response.razorpay_signature,
+                }),
+              });
+            } catch (error) {
+              console.error("Payment verification failed", error);
+            }
             clearCart();
             router.push("/checkout/success");
           },
           prefill: { name: formData.name, email: formData.email, contact: formData.phone },
           theme: { color: "#E85A1C" },
+          modal: { ondismiss: () => setLoading(false) },
+        });
+        rzp.on("payment.failed", (response: any) => {
+          toast.error(response?.error?.description ?? "Payment failed");
         });
         rzp.open();
-      } else if (paymentMethod === "cod") {
-        clearCart();
-        router.push("/checkout/success");
       }
     } catch (err: any) {
       toast.error(err.message ?? "Checkout failed");

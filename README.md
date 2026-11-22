@@ -8,14 +8,14 @@
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/yourname/skwirrel.git
+git clone https://github.com/SubhraS-G/skwirrel-store.git
 cd skwirrel
 npm install
 ```
 
 ### 2. Environment Variables
 ```bash
-cp .env.local .env.local
+cp .env.example .env.local
 # Fill in all values in .env.local
 ```
 
@@ -36,6 +36,25 @@ npm run db:seed
 npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000)
+
+### Static Assets
+
+`public/` ships with generated placeholder images (favicon, OG image, hero
+poster, seed product/blog covers) and a placeholder hero video. Regenerate
+or replace them with:
+
+```bash
+node scripts/generate-assets.mjs      # images + manifest
+node scripts/generate-hero-video.mjs  # hero background video (needs ffmpeg)
+```
+
+### Checks
+
+```bash
+npm run lint   # ESLint
+npx tsc --noEmit  # type check
+npm run build  # production build
+```
 
 ---
 

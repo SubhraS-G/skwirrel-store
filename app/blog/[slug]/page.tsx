@@ -5,11 +5,12 @@ import { RelatedPosts } from "@/components/blog/RelatedPosts";
 import { getBlogPostBySlug, getRelatedPosts } from "@/lib/supabase/blog";
 
 interface BlogPostPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
-  const post = await getBlogPostBySlug(params.slug);
+  const resolvedParams = await params;
+  const post = await getBlogPostBySlug(resolvedParams.slug);
   if (!post) return { title: "Post Not Found" };
   return {
     title: `${post.title} — SKWIRREL Stories`,
@@ -23,7 +24,8 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
-  const post = await getBlogPostBySlug(params.slug);
+  const resolvedParams = await params;
+  const post = await getBlogPostBySlug(resolvedParams.slug);
   if (!post) notFound();
   const related = await getRelatedPosts(post.id, post.tags);
   return (

@@ -30,6 +30,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://skwirrel.in"),
   title: {
     default: "SKWIRREL — Born From Odisha. Made For The World.",
     template: "%s | SKWIRREL",
@@ -58,7 +59,7 @@ export const metadata: Metadata = {
       "More than clothing. It's memory, music, streets, language, and pride.",
     images: [
       {
-        url: "/images/og/og-default.jpg",
+        url: "/images/og/og-default.png",
         width: 1200,
         height: 630,
         alt: "SKWIRREL — Born From Odisha",
@@ -68,8 +69,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "SKWIRREL — Born From Odisha. Made For The World.",
-    description: "Premium cultural streetwear from Odisha, India.",
-    images: ["/images/og/og-default.jpg"],
+    description: "Premium cultural streetwear from Odisha, India.",      images: ["/images/og/og-default.png"],
     creator: "@skwirrelindia",
   },
   robots: {

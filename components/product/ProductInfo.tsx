@@ -46,6 +46,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
     if (!variant) { toast.error("Out of stock"); return; }
 
     addItem({
+      id: `${product.id}-${variant.id}`,
       productId: product.id,
       variantId: variant.id,
       name: product.name,

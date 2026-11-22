@@ -1,12 +1,39 @@
 import { prisma } from "@/lib/prisma";
 
+async function withDbFallback<T>(operation: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    console.warn("Database unavailable, using fallback data:", error);
+    return fallback;
+  }
+}
+
 export async function getFeaturedProducts() {
-  return prisma.product.findMany({
-    where: { is_featured: true, is_active: true },
-    include: { category: true, variants: true },
-    take: 8,
-    orderBy: { created_at: "desc" },
-  });
+  const featured = await withDbFallback(
+    () =>
+      prisma.product.findMany({
+        where: { is_featured: true, is_active: true },
+        include: { category: true, variants: true },
+        take: 8,
+        orderBy: { created_at: "desc" },
+      }),
+    []
+  );
+  if (featured.length > 0) return featured;
+
+  // Nothing flagged as featured — surface the newest active products instead
+  // so the homepage never renders an empty grid while the catalog has stock.
+  return withDbFallback(
+    () =>
+      prisma.product.findMany({
+        where: { is_active: true },
+        include: { category: true, variants: true },
+        take: 8,
+        orderBy: { created_at: "desc" },
+      }),
+    []
+  );
 }
 
 export async function getProducts({
@@ -53,43 +80,55 @@ export async function getProducts({
     : { created_at: "desc" };
 
   const [products, total] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      orderBy,
-      skip,
-      take: limit,
-      include: { category: true, variants: true },
-    }),
-    prisma.product.count({ where }),
+    withDbFallback(
+      () =>
+        prisma.product.findMany({
+          where,
+          orderBy,
+          skip,
+          take: limit,
+          include: { category: true, variants: true },
+        }),
+      []
+    ),
+    withDbFallback(() => prisma.product.count({ where }), 0),
   ]);
 
   return { products, total, pages: Math.ceil(total / limit) };
 }
 
 export async function getProductBySlug(slug: string) {
-  return prisma.product.findUnique({
-    where: { slug },
-    include: {
-      category: true,
-      variants: true,
-      reviews: {
-        where: { is_approved: true },
-        include: { user: { select: { name: true } } },
-        orderBy: { created_at: "desc" },
-        take: 10,
-      },
-    },
-  });
+  return withDbFallback(
+    () =>
+      prisma.product.findUnique({
+        where: { slug },
+        include: {
+          category: true,
+          variants: true,
+          reviews: {
+            where: { is_approved: true },
+            include: { user: { select: { name: true } } },
+            orderBy: { created_at: "desc" },
+            take: 10,
+          },
+        },
+      }),
+    null
+  );
 }
 
 export async function getRelatedProducts(productId: string, categoryId: string) {
-  return prisma.product.findMany({
-    where: {
-      category_id: categoryId,
-      id: { not: productId },
-      is_active: true,
-    },
-    include: { variants: true },
-    take: 4,
-  });
+  return withDbFallback(
+    () =>
+      prisma.product.findMany({
+        where: {
+          category_id: categoryId,
+          id: { not: productId },
+          is_active: true,
+        },
+        include: { category: true, variants: true },
+        take: 4,
+      }),
+    []
+  );
 }

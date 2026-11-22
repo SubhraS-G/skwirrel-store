@@ -9,7 +9,10 @@ export async function POST(request: NextRequest) {
     const data = contactSchema.parse(body);
 
     await prisma.contactMessage.create({ data });
-    await sendContactNotification(data);
+    // A mail hiccup shouldn't fail an already-persisted message.
+    await sendContactNotification(data).catch((error) =>
+      console.error("[CONTACT_EMAIL]", error)
+    );
 
     return NextResponse.json({ message: "Message sent!" }, { status: 201 });
   } catch (error) {
